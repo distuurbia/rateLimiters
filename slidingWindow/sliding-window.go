@@ -17,18 +17,24 @@ func NewSlidingWindow(client *redis.Client) *SlidingWindow {
 
 func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, intervalInSeconds int64, maximumRequests int64) bool {
 	now := time.Now().Unix()
+	const (
+		base    = 10
+		bitSize = 64
+	)
 
-	currentWindow := strconv.FormatInt(now/intervalInSeconds, 10)
+	currentWindow := strconv.FormatInt(now/intervalInSeconds, base)
 	key := userID + ":" + currentWindow
 	value, _ := sw.client.Get(key).Result()
-	requestCountCurrentWindow, _ := strconv.ParseInt(value, 10, 64)
+	requestCountCurrentWindow, _ := strconv.ParseInt(value, base, bitSize)
+
 	if requestCountCurrentWindow >= maximumRequests {
 		return false
 	}
-	lastWindow := strconv.FormatInt((now-intervalInSeconds)/intervalInSeconds, 10)
+
+	lastWindow := strconv.FormatInt((now-intervalInSeconds)/intervalInSeconds, base)
 	key = userID + ":" + lastWindow
 	value, _ = sw.client.Get(key).Result()
-	requestCountLastWindow, _ := strconv.ParseInt(value, 10, 64)
+	requestCountLastWindow, _ := strconv.ParseInt(value, base, bitSize)
 
 	elapsedTimePercentage := float64(now%intervalInSeconds) / float64(intervalInSeconds)
 

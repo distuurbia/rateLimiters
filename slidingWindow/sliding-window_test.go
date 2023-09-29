@@ -8,9 +8,12 @@ import (
 func TestCheckIfRequestAllowed(t *testing.T) {
 	var res bool
 	for {
-		res = sw.CheckIfRequestAllowed("USER_1", 10, 3)
+		res = sw.CheckIfRequestAllowed("USER_1", 1, 3)
 		slog.Info("USER_1", "res", res)
-		res = sw.CheckIfRequestAllowed("USER_2", 10, 3)
+		if !res {
+			break
+		}
+		res = sw.CheckIfRequestAllowed("USER_2", 1, 3)
 		slog.Info("USER_2", "res", res)
 		if !res {
 			break
