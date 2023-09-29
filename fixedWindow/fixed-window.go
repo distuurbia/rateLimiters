@@ -10,7 +10,7 @@ type FixedWindow struct {
 }
 
 func NewFixedWindow(windowTime time.Duration, maxRequests int64) *FixedWindow {
-	return &FixedWindow{windowTime: windowTime, maxRequests: maxRequests}
+	return &FixedWindow{windowTime: windowTime, maxRequests: maxRequests, lastUpdateTimestamp: time.Now()}
 }
 
 func (fw *FixedWindow) CheckIfRequestAllows() bool {
