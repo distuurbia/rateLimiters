@@ -18,6 +18,7 @@ func (fw *FixedWindow) CheckIfRequestAllows() bool {
 
 	if now.Sub(fw.lastUpdateTimestamp) > fw.windowTime {
 		fw.currentRequests = 0
+		fw.lastUpdateTimestamp = now
 	}
 
 	if fw.currentRequests >= fw.maxRequests {
