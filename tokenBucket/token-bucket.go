@@ -11,7 +11,7 @@ type TokenBucket struct {
 	maxTokens           int64
 	currentTokens       int64
 	lastRefillTimestamp time.Time
-	mutex               sync.Mutex
+	mu                  sync.Mutex
 }
 
 func NewTokenBucket(rate, maxTokens int64) *TokenBucket {
@@ -31,8 +31,8 @@ func (tb *TokenBucket) refill() {
 }
 
 func (tb *TokenBucket) CheckIfRequestAllowed(tokens int64) bool {
-	tb.mutex.Lock()
-	defer tb.mutex.Unlock()
+	tb.mu.Lock()
+	defer tb.mu.Unlock()
 	tb.refill()
 	if tb.currentTokens >= tokens {
 		tb.currentTokens -= tokens
