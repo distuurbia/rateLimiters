@@ -22,7 +22,7 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 		bitSize = 64
 	)
 	intervalInSeconds := int64(interval.Seconds())
-	currentWindow := strconv.FormatInt(now.Unix()/intervalInSeconds, bitSize)
+	currentWindow := strconv.FormatInt(now.Unix()/intervalInSeconds, base)
 	key := userID + ":" + currentWindow
 	value, _ := sw.client.Get(key).Result()
 	requestCountCurrentWindow, _ := strconv.ParseInt(value, base, bitSize)
