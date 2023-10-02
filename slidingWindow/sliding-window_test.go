@@ -1,26 +1,25 @@
 package slidingWindow_test
 
 import (
-	"log/slog"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestCheckIfRequestAllowed(t *testing.T) {
-	var res bool
-	dur, _ := time.ParseDuration("10s")
-
-	for {
-		res = sw.CheckIfRequestAllowed("USER_1", dur, 3)
-		slog.Info("USER_1", "res", res)
-		if !res {
-			break
-		}
-		res = sw.CheckIfRequestAllowed("USER_2", dur, 3)
-		slog.Info("USER_2", "res", res)
-		if !res {
-			break
-		}
+	const (
+		intervalToBeParsed = "10s"
+		maxRequests        = 999
+	)
+	interval, err := time.ParseDuration(intervalToBeParsed)
+	require.NoError(t, err)
+	for i := 0; i < maxRequests; i++ {
+		res, err := sw.CheckIfRequestAllowed("USER_IP", interval, maxRequests)
+		require.NoError(t, err)
+		require.True(t, res)
 	}
-
+	res, err := sw.CheckIfRequestAllowed("USER_IP", interval, maxRequests)
+	require.NoError(t, err)
+	require.False(t, res)
 }

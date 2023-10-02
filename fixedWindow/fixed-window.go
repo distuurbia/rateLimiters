@@ -6,28 +6,28 @@ import (
 )
 
 type FixedWindow struct {
-	windowDuration      time.Duration
+	interval            time.Duration
 	lastUpdateTimestamp time.Time
 	maxRequests         int64
 	currentRequests     int64
 	mu                  sync.Mutex
 }
 
-func NewFixedWindow(windowDuration time.Duration, maxRequests int64) *FixedWindow {
+func NewFixedWindow(interval time.Duration, maxRequests int64) *FixedWindow {
 	return &FixedWindow{
-		windowDuration:      windowDuration,
+		interval:            interval,
 		maxRequests:         maxRequests,
 		lastUpdateTimestamp: time.Now(),
 	}
 }
 
-func (fw *FixedWindow) CheckIfRequestAllows() bool {
+func (fw *FixedWindow) CheckIfRequestAllowed() bool {
 	const firstRequest = 1
 	now := time.Now()
 
 	fw.mu.Lock()
 	defer fw.mu.Unlock()
-	if now.Sub(fw.lastUpdateTimestamp) > fw.windowDuration {
+	if now.Sub(fw.lastUpdateTimestamp) > fw.interval {
 		fw.currentRequests = firstRequest
 		fw.lastUpdateTimestamp = now
 		fw.currentRequests++

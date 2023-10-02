@@ -2,6 +2,7 @@ package slidingWindow_test
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"testing"
 
@@ -27,8 +28,14 @@ func SetupRedis() (*redis.Client, func(), error) {
 		DB:   0,
 	})
 	cleanup := func() {
-		client.Close()
-		pool.Purge(resource)
+		err := client.Close()
+		if err != nil {
+			log.Fatalf("failed to close the redis client: %v", err)
+		}
+		err = pool.Purge(resource)
+		if err != nil {
+			log.Fatalf("failed to purge the docker pool: %v", err)
+		}
 	}
 	return client, cleanup, nil
 }

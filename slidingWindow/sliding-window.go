@@ -1,6 +1,7 @@
 package slidingWindow
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -15,7 +16,7 @@ func NewSlidingWindow(client *redis.Client) *SlidingWindow {
 	return &SlidingWindow{client: client}
 }
 
-func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Duration, maximumRequests int64) bool {
+func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Duration, maximumRequests int64) (bool, error) {
 	now := time.Now()
 	const (
 		base    = 10
@@ -24,25 +25,50 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 	intervalInSeconds := int64(interval.Seconds())
 	currentWindow := strconv.FormatInt(now.Unix()/intervalInSeconds, base)
 	key := userID + ":" + currentWindow
-	value, _ := sw.client.Get(key).Result()
-	requestCountCurrentWindow, _ := strconv.ParseInt(value, base, bitSize)
 
+	value, err := sw.client.Get(key).Result()
+	if err != nil && err != redis.Nil {
+		return false, fmt.Errorf("slidingWindow-sw.client.Get(key).Result-err: %w", err)
+	}
+
+	var requestCountCurrentWindow int64
+	if value == "" {
+		requestCountCurrentWindow = 0
+	} else {
+		requestCountCurrentWindow, err = strconv.ParseInt(value, base, bitSize)
+		if err != nil {
+			return false, fmt.Errorf("slidingWindow-strconv.ParseInt-err: %w", err)
+		}
+	}
 	if requestCountCurrentWindow >= maximumRequests {
-		return false
+		return false, nil
 	}
 
 	lastWindow := strconv.FormatInt(now.Add((-1)*interval).Unix()/intervalInSeconds, base)
 	key = userID + ":" + lastWindow
-	value, _ = sw.client.Get(key).Result()
-	requestCountLastWindow, _ := strconv.ParseInt(value, base, bitSize)
+	value, err = sw.client.Get(key).Result()
+	if err != nil && err != redis.Nil {
+		return false, fmt.Errorf("slidingWindow-sw.client.Get(key).Result-err: %w", err)
+	}
+
+	var requestCountLastWindow int64
+	if value == "" {
+		requestCountCurrentWindow = 0
+	} else {
+		requestCountLastWindow, err = strconv.ParseInt(value, base, bitSize)
+		if err != nil {
+			return false, fmt.Errorf("slidingWindow-strconv.ParseInt-err: %w", err)
+		}
+	}
 
 	elapsedTimePercentage := float64(now.Unix()%intervalInSeconds) / interval.Seconds()
 
 	if (float64(requestCountLastWindow)*(1-elapsedTimePercentage))+float64(requestCountCurrentWindow) >= float64(maximumRequests) {
-		return false
+		return false, nil
 	}
 
 	sw.client.Incr(userID + ":" + currentWindow)
 	sw.client.Expire(userID+":"+currentWindow, interval)
-	return true
+
+	return true, nil
 }
