@@ -43,6 +43,6 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 	}
 
 	sw.client.Incr(userID + ":" + currentWindow)
-
+	sw.client.Expire(userID+":"+currentWindow, interval)
 	return true
 }
