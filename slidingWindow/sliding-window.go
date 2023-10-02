@@ -20,12 +20,12 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 	const (
 		base             = 10
 		bitSize          = 64
-		tagFmt           = 'e'
-		precision        = 4
+		tagFmt           = 'f'
+		precision        = -1
 		convertToSeconds = 1000
 	)
 
-	currentWindow := strconv.FormatFloat(float64(now.Unix())/interval.Seconds(), tagFmt, precision, base)
+	currentWindow := strconv.FormatFloat(float64(now.Unix())/interval.Seconds(), tagFmt, precision, bitSize)
 	key := userID + ":" + currentWindow
 	value, _ := sw.client.Get(key).Result()
 	requestCountCurrentWindow, _ := strconv.ParseInt(value, base, bitSize)
@@ -34,7 +34,7 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 		return false
 	}
 
-	lastWindow := strconv.FormatFloat(float64(now.Add((-1)*interval).Unix())/interval.Seconds(), tagFmt, precision, base)
+	lastWindow := strconv.FormatFloat(float64(now.Add((-1)*interval).Unix())/interval.Seconds(), tagFmt, precision, bitSize)
 	key = userID + ":" + lastWindow
 	value, _ = sw.client.Get(key).Result()
 	requestCountLastWindow, _ := strconv.ParseInt(value, base, bitSize)
