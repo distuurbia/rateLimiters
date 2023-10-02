@@ -33,13 +33,13 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 	if requestCountCurrentWindow >= maximumRequests {
 		return false
 	}
-
-	lastWindow := strconv.FormatFloat(float64(now.Add((-1)*interval).Unix())/interval.Seconds(), tagFmt, precision, bitSize)
+	intervalInSeconds := int64(interval.Seconds())
+	lastWindow := strconv.FormatInt(now.Add((-1)*interval).Unix()/intervalInSeconds, base)
 	key = userID + ":" + lastWindow
 	value, _ = sw.client.Get(key).Result()
 	requestCountLastWindow, _ := strconv.ParseInt(value, base, bitSize)
 
-	elapsedTimePercentage := float64(now.Unix()%(interval.Milliseconds()/convertToSeconds)) / interval.Seconds()
+	elapsedTimePercentage := float64(now.Unix()%intervalInSeconds) / interval.Seconds()
 
 	if (float64(requestCountLastWindow)*(1-elapsedTimePercentage))+float64(requestCountCurrentWindow) >= float64(maximumRequests) {
 		return false
