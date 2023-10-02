@@ -22,13 +22,16 @@ func NewFixedWindow(windowDuration time.Duration, maxRequests int64) *FixedWindo
 }
 
 func (fw *FixedWindow) CheckIfRequestAllows() bool {
+	const firstRequest = 1
 	now := time.Now()
 
 	fw.mu.Lock()
 	defer fw.mu.Unlock()
 	if now.Sub(fw.lastUpdateTimestamp) > fw.windowDuration {
-		fw.currentRequests = 0
+		fw.currentRequests = firstRequest
 		fw.lastUpdateTimestamp = now
+		fw.currentRequests++
+		return true
 	}
 
 	if fw.currentRequests >= fw.maxRequests {
