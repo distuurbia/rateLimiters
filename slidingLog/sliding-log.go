@@ -25,6 +25,6 @@ func (sl *SlidingLog) CheckIfRequestAllowed(userID string, uniqueRequestID strin
 	}
 
 	sl.client.ZAdd(userID, redis.Z{Score: float64(time.Now().Unix()), Member: uniqueRequestID})
-	sl.client.Expire(uniqueRequestID, interval)
+	sl.client.ZRemRangeByScore(userID, lastWindowTime, currentTime)
 	return true
 }
