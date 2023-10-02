@@ -15,14 +15,17 @@ func NewSlidingWindow(client *redis.Client) *SlidingWindow {
 	return &SlidingWindow{client: client}
 }
 
-func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, intervalInSeconds int64, maximumRequests int64) bool {
-	now := time.Now().Unix()
+func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Duration, maximumRequests int64) bool {
+	now := time.Now()
 	const (
-		base    = 10
-		bitSize = 64
+		base             = 10
+		bitSize          = 64
+		tagFmt           = 'e'
+		precision        = 4
+		convertToSeconds = 1000
 	)
 
-	currentWindow := strconv.FormatInt(now/intervalInSeconds, base)
+	currentWindow := strconv.FormatFloat(float64(now.Unix())/interval.Seconds(), tagFmt, precision, base)
 	key := userID + ":" + currentWindow
 	value, _ := sw.client.Get(key).Result()
 	requestCountCurrentWindow, _ := strconv.ParseInt(value, base, bitSize)
@@ -31,12 +34,12 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, intervalInSeconds 
 		return false
 	}
 
-	lastWindow := strconv.FormatInt((now-intervalInSeconds)/intervalInSeconds, base)
+	lastWindow := strconv.FormatFloat(float64(now.Add((-1)*interval).Unix())/interval.Seconds(), tagFmt, precision, base)
 	key = userID + ":" + lastWindow
 	value, _ = sw.client.Get(key).Result()
 	requestCountLastWindow, _ := strconv.ParseInt(value, base, bitSize)
 
-	elapsedTimePercentage := float64(now%intervalInSeconds) / float64(intervalInSeconds)
+	elapsedTimePercentage := float64(now.Unix()%(interval.Milliseconds()/convertToSeconds)) / interval.Seconds()
 
 	if (float64(requestCountLastWindow)*(1-elapsedTimePercentage))+float64(requestCountCurrentWindow) >= float64(maximumRequests) {
 		return false
