@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/distuurbia/rateLimiters/slidingWindow"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/ory/dockertest"
 )
 

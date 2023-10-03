@@ -10,7 +10,7 @@ import (
 	"github.com/distuurbia/rateLimiters/slidingLog"
 	"github.com/distuurbia/rateLimiters/slidingWindow"
 	"github.com/distuurbia/rateLimiters/tokenBucket"
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )

@@ -1,11 +1,12 @@
 package slidingWindow
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 )
 
 type SlidingWindow struct {
@@ -16,7 +17,7 @@ func NewSlidingWindow(client *redis.Client) *SlidingWindow {
 	return &SlidingWindow{client: client}
 }
 
-func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Duration, maximumRequests int64) (bool, error) {
+func (sw *SlidingWindow) CheckIfRequestAllowed(ctx context.Context, userID string, interval time.Duration, maximumRequests int64) (bool, error) {
 	now := time.Now()
 	const (
 		base    = 10
@@ -26,7 +27,7 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 	currentWindow := strconv.FormatInt(now.Unix()/intervalInSeconds, base)
 	key := userID + ":" + currentWindow
 
-	value, err := sw.client.Get(key).Result()
+	value, err := sw.client.Get(ctx, key).Result()
 	if err != nil && err != redis.Nil {
 		return false, fmt.Errorf("slidingWindow-sw.client.Get(key).Result-err: %w", err)
 	}
@@ -46,7 +47,7 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 
 	lastWindow := strconv.FormatInt(now.Add((-1)*interval).Unix()/intervalInSeconds, base)
 	key = userID + ":" + lastWindow
-	value, err = sw.client.Get(key).Result()
+	value, err = sw.client.Get(ctx, key).Result()
 	if err != nil && err != redis.Nil {
 		return false, fmt.Errorf("slidingWindow-sw.client.Get(key).Result-err: %w", err)
 	}
@@ -67,8 +68,8 @@ func (sw *SlidingWindow) CheckIfRequestAllowed(userID string, interval time.Dura
 		return false, nil
 	}
 
-	sw.client.Incr(userID + ":" + currentWindow)
-	sw.client.Expire(userID+":"+currentWindow, interval)
+	sw.client.Incr(ctx, userID+":"+currentWindow)
+	sw.client.Expire(ctx, userID+":"+currentWindow, interval)
 
 	return true, nil
 }
