@@ -67,7 +67,7 @@ func (cm *CustomMiddleware) MiddlewareSlidingLog(next echo.HandlerFunc) echo.Han
 			slog.Error(err.Error())
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		res := cm.sl.CheckIfRequestAllowed(c.RealIP(), uuid.NewString(), interval, maxRequests)
+		res := cm.sl.CheckIfRequestAllowed(c.Request().Context(), c.RealIP(), uuid.NewString(), interval, maxRequests)
 		if !res {
 			return echo.NewHTTPError(http.StatusTooManyRequests, "Try again later sliding log")
 		}
@@ -87,7 +87,7 @@ func (cm *CustomMiddleware) MiddlewareSlidingWindow(next echo.HandlerFunc) echo.
 			slog.Error(err.Error())
 			return echo.NewHTTPError(http.StatusInternalServerError)
 		}
-		res, err := cm.sw.CheckIfRequestAllowed(c.RealIP(), interval, maxRequests)
+		res, err := cm.sw.CheckIfRequestAllowed(c.Request().Context(), c.RealIP(), interval, maxRequests)
 		if err != nil {
 			err = fmt.Errorf("CustomMiddleware-cm.sw.CheckIfRequestAllowed-err: %w", err)
 			slog.Error(err.Error())
